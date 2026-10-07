@@ -4,8 +4,13 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const userPaused = new WeakSet();
   const automaticPauses = new WeakSet();
+  const restartTimers = new WeakMap();
   let motionPaused = reducedMotion.matches;
 
+  function cancelRestart(video) {
+    clearTimeout(restartTimers.get(video));
+    restartTimers.delete(video);
+  }
   function pause(video) {
     if (!video.paused) {
       automaticPauses.add(video);
@@ -13,7 +18,8 @@
     }
   }
   function playIfVisible(video) {
-    if (video.dataset.visible !== 'true' || video.closest('[hidden]') || document.hidden || motionPaused || userPaused.has(video)) return;
+    if (video.dataset.visible !== 'true' || video.closest('[hidden]') || document.hidden || motionPaused || userPaused.has(video) || restartTimers.has(video)) return;
+    if (video.ended) video.currentTime = 0;
     video.play()?.catch(() => {});
   }
   document.querySelectorAll('.operation-group').forEach(group => {
@@ -26,12 +32,15 @@
     stage.setAttribute('aria-roledescription', 'carousel');
     stage.setAttribute('aria-label', `${label} examples`);
     group.append(stage);
+    const track = document.createElement('div');
+    track.className = 'case-track';
+    stage.append(track);
     slides.forEach((slide, index) => {
       slide.hidden = index !== 0;
       slide.setAttribute('role', 'group');
       slide.setAttribute('aria-roledescription', 'slide');
       slide.setAttribute('aria-label', `${index + 1} of ${slides.length}`);
-      stage.append(slide);
+      track.append(slide);
     });
     const previous = document.createElement('button');
     const next = document.createElement('button');
@@ -65,25 +74,44 @@
     function select(index) {
       const selected = (index + slides.length) % slides.length;
       if (selected === current) return;
-      const outgoing = slides[current].querySelector('video');
-      outgoing.dataset.visible = 'false';
-      pause(outgoing);
-      slides[current].hidden = true;
       current = selected;
-      slides[current].hidden = false;
+      slides.forEach((slide, i) => {
+        const hidden = i !== current;
+        if (hidden && !slide.hidden) {
+          const outgoing = slide.querySelector('video');
+          outgoing.dataset.visible = 'false';
+          pause(outgoing);
+        }
+        slide.hidden = hidden;
+      });
       dots.forEach((dot, i) => dot.setAttribute('aria-pressed', String(i === current)));
-      status.textContent = `${label}: ${current + 1} of ${slides.length}`;
+      status.textContent = `${label}: example ${current + 1} of ${slides.length}`;
       // IntersectionObserver starts the newly visible clip and keeps hidden clips paused.
     }
     previous.addEventListener('click', () => select(current - 1));
     next.addEventListener('click', () => select(current + 1));
   });
   for (const video of videos) {
+    if (video.matches('.comparison-video')) {
+      // Keep the final frame on screen before beginning the next loop.
+      video.loop = false;
+      video.addEventListener('ended', () => {
+        cancelRestart(video);
+        restartTimers.set(video, setTimeout(() => {
+          restartTimers.delete(video);
+          playIfVisible(video);
+        }, 800));
+      });
+    }
     video.addEventListener('pause', () => {
       if (automaticPauses.has(video)) automaticPauses.delete(video);
-      else userPaused.add(video);
+      else if (!video.ended) userPaused.add(video);
     });
-    video.addEventListener('play', () => userPaused.delete(video));
+    video.addEventListener('play', () => {
+      cancelRestart(video);
+      userPaused.delete(video);
+    });
+    video.addEventListener('seeking', () => cancelRestart(video));
   }
   const observer = new IntersectionObserver(entries => {
     for (const {target, isIntersecting} of entries) {

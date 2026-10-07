@@ -25,11 +25,15 @@ body { font-family: 'Noto Sans', sans-serif; }
 .clinical-table { max-width: 640px; margin-bottom: 1.5rem; }
 .result-block { margin-top: 3rem; }
 .operation-group + .operation-group { margin-top: 3rem; }
+#demos > .container { max-width: 1440px; }
+#demos .result-block { max-width: 960px; margin-left: auto; margin-right: auto; }
 .experiment-clip { margin: 0 0 2rem; }
 .experiment-clip figcaption { margin-top: .6rem; font-size: .9rem; }
 .experiment-clip[hidden] { display: none; }
 .case-carousel { position: relative; margin: 0 20px; }
+.case-track { display: grid; grid-template-columns: minmax(0, 1fr); }
 .case-carousel .experiment-clip { margin-bottom: 0; }
+.case-track .comparison-video { min-width: 0; }
 .carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: #fff; color: #4a4a4a; box-shadow: 0 2px 5px #0003; cursor: pointer; }
 .carousel-arrow:hover { background: #f5f5f5; }
 .carousel-arrow svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
