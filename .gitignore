@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.log
+
+# Keep unreleased manuscripts out of the website.
+*.[pP][dD][fF]
