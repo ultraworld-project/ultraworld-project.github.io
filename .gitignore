@@ -2,5 +2,6 @@
 __pycache__/
 *.log
 
-# Keep unreleased manuscripts out of the website.
+# Exclude other manuscripts; publish only the explicitly selected paper.
 *.[pP][dD][fF]
+!assets/UltraWorld.pdf
